@@ -1,6 +1,6 @@
 # PortAuthority vInf
-Use scapy to listen to LLDP broadcasts, Flask+HTML+JS to produce a simple GUI, and requests to upload them to a server
-(C) The Ohio State University; Authored by Chris Hartley - hartleyc@gmail.com
+#Use scapy to listen to LLDP broadcasts, Flask+HTML+JS to produce a simple GUI, and requests to upload them to a server
+# © The Ohio State University; Authored by Chris Hartley - hartleyc@gmail.com
 
 Map network interfaces to physical locations
 
