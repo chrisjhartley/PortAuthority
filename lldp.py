@@ -69,7 +69,6 @@ app = Flask(__name__)
 PATH=os.path.dirname(os.path.realpath(__file__)) # os.path.expanduser("~")
 path_delim = "\\" if platform.system() == "Windows" else "/"
 # TODO: set an "editor" variable according to Windows/OS X/Linux/BSD rather than just hard-coding notepad.
-#background_image_filename = "osu.png" # Put this in the config file...
 fields = ['SystemName','SystemIPAddress','SystemMacAddress','PortMacAddress','InterfaceDescription','building','room','jack', 'MappingMacAddress','MappingIPAddress','PortID','PortIDSubtype']
 editor="notepad" if platform.system()=="Windows" else "open" if platform.system() == "Darwin" else "gedit"
 
