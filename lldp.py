@@ -62,9 +62,9 @@ finally:
 
 app = Flask(__name__)
 # TODO: NO! These go in the config file.  Fix this.
-api_base_url="https://cmdb.it.ohio-state.edu/"
-api_building_path="/api/portmapper_locations"
-api_mapping_path="/api/portmapper_data"
+#api_base_url="https://cmdb.it.ohio-state.edu/"
+#api_building_path="/api/portmapper_locations"
+#api_mapping_path="/api/portmapper_data"
 
 PATH=os.path.dirname(os.path.realpath(__file__)) # os.path.expanduser("~")
 path_delim = "\\" if platform.system() == "Windows" else "/"
@@ -85,6 +85,9 @@ def write_config_buildings(buildings): # Hopefully we're not updating other type
 
 config=load_config()
 background_image_filename = config['logo']
+api_base_url = config['url_base']
+api_building_path = config['url_buildings']
+api_mapping_path = config['url_mappings']
 
 def get_buildings():
     resp = requests.get(f"{api_base_url}/{api_building_path}", headers={'Authorization': f"Bearer {config['Auth-Token']}"})

@@ -25,3 +25,5 @@ Please let me know about any issues you run into, but understand that this is a 
 
 ## To start on non-Windows, just run pa.sh.  lldp.py should install its own prereqs (scapy, flask)
 ## To start on Windows, run WINinstall.BAT, and then pa.bat.  Should work :)  Let me know if not!
+
+# You'll also want to move config-test.json to config.json after altering it to suit your needs.
