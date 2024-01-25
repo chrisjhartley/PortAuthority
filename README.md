@@ -20,3 +20,8 @@ Someone will come along and write a README at some point, I guess.  The basic id
 Why?  Well, it's helpful to know where cables go.  Which jack is connected to this switch interface, etc... that's helpful if you care where your cables are going.  Or if you have an E911 requirement, for instance.
 
 Please let me know about any issues you run into, but understand that this is a client only.  You'll need to provide a server, configure an access token and its URLs, and it will have to honor the simple REST requests the client makes - or you can change those queries trivially!
+
+# Oh, right, how to do stuff...
+
+## To start on non-Windows, just run pa.sh.  lldp.py should install its own prereqs (scapy, flask)
+## To start on Windows, run WINinstall.BAT, and then pa.bat.  Should work :)  Let me know if not!
