@@ -1,0 +1,8 @@
+{
+    "url_base": "https://cmdb-dev-legacy.it.ohio-state.edu/portmapper_data_api",
+    "logo": "logo-color.png",
+    "buildings": "[{\"name\": \"Apple Creek - Hollow Compost Shed (8123)\", \"id\": \"8123\"} ]",
+    "debug": "true",
+    "lldp_timeout_seconds": "60",
+    "Auth-Token": "[GET YOUR OWN!]"
+}

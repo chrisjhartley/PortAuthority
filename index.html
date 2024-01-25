@@ -1,0 +1,441 @@
+<html>
+        <style>
+            table/*,th,tr,td*/ { border: 1px solid black; }
+	    /* body { background-image: url('/bgimage'); }*/
+	    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+H1 {
+        text-indent: 50px;
+}
+
+H2 {
+        text-indent: 50px;
+}
+
+
+p {
+        text-indent: 50px;
+}
+
+b {
+        font-size: 70px;
+}
+
+.button1 {
+  background-color: #008CBA; /* blue */
+  border: none;
+  color: white;
+  padding: 5px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin: 1px 1px;
+  cursor: pointer;
+  transition-duration: 0.4s;
+}
+.button1:hover {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+
+.button1 {border-radius: 8px;}
+
+
+body {
+font-family: 'Bebas Neue', cursive;
+letter-spacing: 1px;
+
+}
+
+div { border-radius: 3px; border: solid white 1px; }
+
+/* input { width: 300px; } */ 
+
+table, th, td {
+  border-radius: 3px;
+  border: none;
+}
+
+	</style>
+
+	<head>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>	
+		<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+		<title>No one will ever see this title...</title>
+		<script> // TODO: (NOW) IF WE'VE NEVER CONNECTED TO THE SERVER, WE'LL NEED TO re-run init() or whatever when we first do connect.  On OS X, for whatever reason, it takes a long time to get started, but it could happen on any OS - don't get me started on every single little thing about winders.
+			var capture_fields = ["SystemName", "SystemIPAddress", "SystemMacAddress", "PortMacAddress", "PortID", "PortIDSubtype", "InterfaceDescription", "MappingIPAddress", "MappingMacAddress"];
+			//var mapping_fields = ["room", "jack"];
+			var _data = "Nope";
+                        var current_setup_step = 0;
+			buildings=[];
+			var FU = "";
+			// scripts go here, maybe?
+			function setup() { 
+			 	// TODO: Move this into function interfaces, add to setup_steps. ALSO! Don't rely on each function to call its next - just call them all from a main function.  BUT maybe we can't, because we might (?) need the callback to run the next stage.  But maybe not.  So that's a thing to consider... 
+				var x = new XMLHttpRequest();
+                                x.open("GET", "http://127.0.0.1:5000/interfaces");
+				x.onreadystatechange = function() { 
+					if (this.readyState == XMLHttpRequest.DONE && this.status == 200) { 
+						var resp = JSON.parse(this.response);
+						//alert("Woo stuff", resp, "right?");
+						for (var i = 0; i < resp.length; i++) { 
+							var val = resp[i]['name'] + " | " + resp[i]['ip'];
+							var option = document.createElement('OPTION');
+							option.text = val;
+							option.value = resp[i]['name'];
+							document.getElementById('interfaces').appendChild(option);
+						}
+                                            setup_steps[current_setup_step++](); // Well if this isn't a premature optimization, I don't know what might qualify...
+
+					}
+				}
+                                x.send();
+			}
+                        function get_buildings() { 
+				 console.log("get_buildings");
+                                 var x = new XMLHttpRequest();
+                                 x.open("GET","http://127.0.0.1:5000/buildings");
+                                 x.onreadystatechange = function() { 
+                                     if (this.readyState == XMLHttpRequest.DONE && this.status == 200) { 
+                                         var resp = JSON.parse(this.response);
+                                         for (var i = 0; i < resp.length; i++) { 
+                                             var val = resp[i]['name'] + " | " + resp[i]['id'];
+                                             //var option = document.createElement('OPTION');
+                                             //option.text = val;
+                                             //option.value = resp[i]['id'];
+                                             //document.getElementById('building').appendChild(option);
+					     buildings.push(val);
+                                         }
+                                     }
+				     if (setup_steps.length > current_setup_step) setup_steps[current_setup_step++](); else console.log("No more setup steps?");
+				}
+			        x.send();
+                        }
+			function building_search_start() { 
+				var buildingTD = document.getElementById('buildingTD');
+				var input = document.createElement('INPUT');
+				input.id='building_search_string';
+				//input.onChange=building_search_change;
+				input.addEventListener("input",building_search_change,false);
+				buildingTD.insertBefore(input,buildingTD.childNodes[0]);
+				var BR=document.createElement('BR');
+				BR.id='building_search_string_BR';
+				buildingTD.insertBefore(BR,buildingTD.childNodes[1]);
+				input.focus();
+
+			}
+			function get_local_records() { 
+				 console.log("get_local_records");
+				 var x = new XMLHttpRequest();
+				 x.open("GET", "http://127.0.0.1:5000/local_records");
+				 x.onreadystatechange = function() { 
+				     console.log("get_local_records", this.readyState, this.status);
+                                     if (this.readyState == XMLHttpRequest.DONE && this.status == 200) { 
+                                         var resp = JSON.parse(this.response);
+				         console.log("local_records", resp);
+					 var total = resp['total'];
+					 var unuploaded = resp['unuploaded'];
+ 					 if (unuploaded > 0) { document.getElementById('upload_button').disabled=false; } else {  document.getElementById('upload_button').disabled=true; } 
+					 console.log("total = ",total);
+					 document.getElementById('local_records').innerText = total + " total records; "+unuploaded+" unuploaded";
+							
+					 if (parseInt(unuploaded) > 0) document.getElementById('upload_button').disabled = false; else console.log(resp," is not greater than 0...");
+				     }
+				 }
+				 x.send();
+				 if (setup_steps.length > current_setup_step+1) setup_steps[current_setup_step++]();
+				 return "YES, BUT..";
+			}
+
+			var setup_steps=[/*interfaces,*/get_buildings,get_local_records];
+
+			function _clear_capture() { 
+				 //for (var i = 0; i < capture_fields.length; i++) document.getElementById(capture_fields[i]).value="";
+				 // nice try!
+			         clear_capture_fields(false);
+			}
+
+			function _capture() {
+				document.getElementById('capture_button').disabled=true;
+				console.log("Capture, mmmkay?");
+				//document.getElementById('results').innerHTML = '';
+				// get fields to include .. 
+		   	        var interface = document.getElementById('interfaces').value;
+				//var building = document.getElementById('building').value;
+		  	  	//var room = document.getElementById('room').value;
+				//var jack = document.getElementById('jack').value;
+				// fields = []; enumerate those fields... the above is probably slightly too much hard-coded nonsense.
+				data = "interface="+interface // +"&building="+building+"&room="+room+"&jack="+jack;
+				console.log("Sniff!! Send "+data);
+				x = new XMLHttpRequest();
+				x.open("GET","http://127.0.0.1:5000/capture?interface="+interface);
+				x.onreadystatechange = function() { 
+				    if (this.readyState == XMLHttpRequest.DONE && this.status == 200) { 
+                                         var resp = this.response;
+					 console.log("resp = ", resp);
+				         try { 
+			                    var data = JSON.parse(resp);
+				          } catch(error) {
+         				    for (var i = 0; i < capture_fields.length; i++) {
+					        var field = capture_fields[i];
+						document.getElementById(field).value = "(error)";
+					    }
+					    console.log("_capture: ERROR: ", error);
+					    document.getElementById('capture_button').disabled=false;
+					    return;
+					 }
+				         //document.getElementById('results').innerText = resp;
+					 //fields = ["SystemName", "SystemIPAddress", "SystemMacAddress", "PortMacAddress", "InterfaceDescription"]; 
+			                 for (var i = 0; i < capture_fields.length; i++) { 
+				               field=capture_fields[i];
+				               console.log("Let's set field ", field, " to its value ", data[field]);
+			                       document.getElementById(field).value = data[field];
+					       document.getElementById('store_button').disabled=false;
+					       document.getElementById('upload_button').disabled=false;
+				         }
+					 document.getElementById('capture_button').disabled=false;
+
+				    }
+
+				}
+				x.send();
+
+			}
+			function upload() { 
+			         //alert("One day, someone will write this function.");
+				 // This again.
+				 x = new XMLHttpRequest();
+				 x.open("GET","http://127.0.0.1:5000/upload");
+				 x.onreadystatechange = function() {
+				 	if (this.readyState == XMLHttpRequest.DONE && this.status == 200) { 
+						var resp = this.response;
+						console.log("resp = ", resp);
+                                         	try {
+                                            		var data = JSON.parse(resp);
+							console.log(data);
+							get_local_records();
+                                          	} catch(error) {
+							console.log("ERROR",error);
+						}
+					}
+				}
+				x.send();
+			}
+			function validate_fields() { 
+				 var fields = capture_fields.concat(['room','jack','building']);
+				 valid = true;
+				 invalid_fields = [];
+				 for (var i = 0; i < fields.length; i++) { 
+				 	if (document.getElementById(fields[i]).value.length == 0)  {
+					    valid = false;
+					    invalid_fields.push(fields[i]);
+					}
+				 }
+				 if (!valid) alert("Field(s) "+invalid_fields.toString()+" must be modified to be valid.");
+			         return valid;
+			}
+			function clear_capture_fields(clear_loc_data=false) {
+				 var fields = capture_fields;
+				 if (clear_loc_data) fields=capture_fields.concat(['room','jack']);
+				 for (var i = 0; i < fields.length; i++) { 
+                                     field = fields[i];
+                                     document.getElementById(field).value="";
+                                 }
+			}
+			function edit_results() { 
+				 var x = new XMLHttpRequest();
+				 x.open("GET","/edit_records");
+				 x.send();
+			}
+			function edit_config() {
+				 var x = new XMLHttpRequest();
+				 x.open("GET","/edit_config");
+				 x.send();
+			}
+			var sigh = 0;
+			function select_building(obj) {
+                        	console.log(obj.innerText, "was selected?");
+				document.getElementById('building').value = obj.innerText;
+				document.getElementById('building_select').remove();
+                        }
+			function building_typeahead() { 
+				 var building_string = document.getElementById('building').value.toLowerCase();
+				 display_buildings = [];
+				 console.log("Searching for ", building_string);
+				 for (building in buildings) { 
+					if (buildings[building].toLowerCase().indexOf(building_string) != -1) { 
+						console.log(buildings[building]);
+						display_buildings.push(buildings[building]);
+					}
+				 }
+				 // create a scrollable, selectable list...
+				 if (!document.getElementById('building_select')) {
+				 	var div = document.createElement('div');
+				 	div.style.overflow='scroll';
+				 	div.style.height='300px';
+				 	div.id = "building_select";
+				 	div.style.width='400px';
+				 	//div.style.position='absolute';
+				 	div.style.top = document.getElementById('building').style.top; // not quite right.
+				 	div.style.left = document.getElementById('building').style.left;
+				 	div.innerHTML = "WOOOO?";
+				 	//document.body.appendChild(div);
+				 	document.getElementById('buildingTD').appendChild(div);
+				 }
+				 var building_select = document.getElementById('building_select');
+				 building_select.innerHTML=""; // cheap, shitty way to clear all children.  Sorry, kids.
+				 var table = document.createElement('TABLE');
+				 building_select.appendChild(table);
+				 for (var i = 0; i < display_buildings.length; i++) { 
+					var tr = document.createElement('TR');
+					var td = document.createElement('TD');
+					td.style.backgroundColor = "#2233ff";
+					//td.onclick="select_building(this)";
+					//td.innerText = display_buildings[i];
+					var a = document.createElement("A");
+					a.innerText = display_buildings[i];
+					a.style.color = "white";
+					a.onClick="select_building(this)";
+					a.setAttribute("onclick", "select_building(this)");
+					td.appendChild(a);
+					tr.appendChild(td);
+					table.appendChild(tr);
+				 }
+			}
+			function store() { 
+				 var x = new XMLHttpRequest();
+				 valid = validate_fields();
+				 if (!valid) { return; } // validate_fields already warns as necessary, no sense in doing it again.
+				 params="";
+			         var fields = capture_fields.concat(['building','room','jack']);
+			         for (var i = 0; i < fields.length; i++) {
+					console.log("Building parameters - ",fields[i]);
+					var val = document.getElementById(fields[i]).value;
+					if (fields[i] == "building") { // Can't love this, but we only want the
+						val = val.split(' | ')[1]; // numerical ID of the building, not its name.
+					}
+					params+=fields[i]+"="+val+"&";
+				        x.open("GET","http://127.0.0.1:5000/store_results?"+params);
+				        x.onreadystatechange = function() { 
+					    if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+					        var resp = this.response;
+					        try {
+						    var data = JSON.parse(resp);
+						    console.log("store", data);
+						    get_local_records();
+						    clear_capture_fields(true);
+					        } catch (error) { 
+					            alert("Error storing results");
+						    return;
+					        }
+					    }
+					}
+				 }
+			         x.send();
+			}
+			function update_buildings() { 
+				 console.log("update_buildings()")
+				 var x = new XMLHttpRequest();
+				 x.open("GET", "http://127.0.0.1:5000/update_buildings");
+				 x.onreadystatechange = function() { 
+                                        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                                                var resp = this.response;
+                                                //alert("update_buildings(): " + resp);
+                                                if (resp.indexOf('success') != -1) {
+                                                    document.location.href = document.location.href;
+                                                    //get_local_records();
+                                                }
+                                        } else if (this.readyState == XMLHttpRequest.DONE && this.status != 200) {
+                                                alert("Error updating?");
+                                        }
+
+                                 }
+                                 x.send();
+                        }
+
+
+			function purge_local() { 
+ 				 if (!confirm("Are you sure you want to delete all saved records?")) return;
+				 console.log("purge_local()");
+                                 var x = new XMLHttpRequest();
+				 x.open("GET", "http://127.0.0.1:5000/purge_local");
+				 x.onreadystatechange = function() { 
+				 	if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                                                var resp = this.response;
+						if (resp.indexOf('success'))
+					            //document.location.href = document.location.href;
+						    get_local_records();
+					} else if (this.readyState == XMLHttpRequest.DONE && this.status != 200) {
+						alert("Error purging?");
+					}
+
+				 }
+			         x.send();
+			}
+
+		</script>
+	</head>
+	<body onload="setup()">
+		<table><tr><td><B>1)</B></td><td>
+		<table bgcolor=#d7eaf3>
+		     <tr>
+			     <td colspan=2>Select an Interface: <select style="background-color: #33ff33;" id=interfaces></select>
+				     <input type=button class=button1 value="Start Capture" id=capture_button  onclick="_capture()"><input type=button class=button1 value="Clear" id=clear_button onclick="_clear_capture()"></td>
+		     </tr>
+		     <tr>
+			     <td>SystemName <input readonly id=SystemName></td>
+		             <td>SystemIPAddress <input readonly id=SystemIPAddress></td>
+		     </tr>
+		     <tr>
+			     <td>SystemMacAddress <input readonly id=SystemMacAddress></td>
+			     <td>PortMacAddress <input readonly id=PortMacAddress></td>
+		     </tr>
+		     <tr>
+			     <td>PortID <input readonly id=PortID></td>
+			     <td>PortIDSubtype <input readonly id=PortIDSubtype></td>
+		     </tr>
+		     <tr>
+			 <td colspan=2>InterfaceDescription<BR>
+				 <input size=100% readonly id=InterfaceDescription>
+		     </td></tr>
+		</table>
+		<input hidden id=MappingMacAddress><input hidden id=MappingIPAddress>
+	    </tr>
+	    <tr><td><B>2)</B></td><td>
+		<!--<textarea cols=100 rows=10 id='results'>No results yet</textarea><BR>-->
+		<table bgcolor=#77b5d9 width=100%><tr><td>Building</td><td id=buildingTD><input size=50 id=building placeholder="Building" oninput="building_typeahead()"></td></tr>
+			<tr><td>Room</td><td><input type=text id=room></td></tr>
+			<tr><td>Jack</td><td><input type=text id=jack><BR></td></tr>
+		</table>
+		    </td></tr>
+		    <tr><td><B>3)</B></td><td>
+		<table bgcolor=#576f9c width=100%><tr>
+			<td><input type=button class=button1 disabled id="store_button" value="Store Locally" onclick="store()">&nbsp;(<span id="local_records">0</span> records stored locally)<BR></td></tr>
+			<tr><td>
+				<!--<input class=button1 type=button disabled id="upload_button" value="Upload Results" onclick="upload()"><BR>-->
+				<HR>
+				<input class=button1 type=button value="Edit Results" onclick="edit_results()">
+				<input class=button1 type=button value="Purge Local Storage" onclick="purge_local()">
+				<input class=button1 type=button id="edit_config" value="Edit Config" onclick="edit_config()">
+				<input class=button1 type=button value="Update Buildings" onclick="update_buildings()">
+
+			</td></tr>
+		</table>
+                
+
+			    </td>
+	    </tr>
+            <tr><td><B>4)</B></td><td>
+                <!--<textarea cols=100 rows=10 id='results'>No results yet</textarea><BR>-->
+                <table bgcolor=#374f7c width=100%>
+                        
+                        <tr><td><BR><input class=button1 type=button disabled id="upload_button" value="Upload Results" onclick="upload()"><BR><BR></td></tr>
+
+                </table>
+                    </td></tr>
+
+
+	</body>
+</html>

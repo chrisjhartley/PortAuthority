@@ -1,0 +1,114 @@
+<HTML>
+	<HEAD>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
+
+		<TITLE>PortAuthority v4</TITLE>
+		<!--<style> table,th,tr,td { border: 1px solid black; }</style>-->
+		<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+H1 {
+        text-indent: 50px;
+}
+
+H2 {
+        text-indent: 50px;
+}
+
+
+p {
+        text-indent: 50px;
+}
+
+b {
+        font-size: 100px;
+}
+
+.button1 {
+  background-color: #008CBA; /* blue */
+  border: none;
+  color: white;
+  padding: 5px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin: 1px 1px;
+  cursor: pointer;
+  transition-duration: 0.4s;
+}
+.button1:hover {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+
+.button1 {border-radius: 8px;}body {
+font-family: 'Bebas Neue', cursive;
+letter-spacing: 1px;
+
+}
+
+table, th, td {
+  border: none;
+}
+			
+
+		</style>	
+
+	<SCRIPT>
+		interfaceAlive = false;
+		function ping() { 
+					document.getElementById('service_status').innerHTML = '<font color=green>CONNECTED</font>';
+			 if (interfaceAlive == false) { 
+			     console.log("This might be a good time to refresh the main pane, but it might also not be?");
+			 }
+			 interfaceAlive = true;
+		}
+		function ping_fail() { 
+			 document.getElementById('service_status').innerHTML = '<font color=red>DISCONNECTED</font>';
+			 interfaceAlive = false;
+		}
+		function check_ping() {
+			 var x = new XMLHttpRequest();
+			 x.open("GET", "http://127.0.0.1:5000/ping")
+			 x.onreadystatechange = function() { 
+			     if (this.readyState == XMLHttpRequest.DONE && this.status == 200) { 
+				console.log(this.response);
+				var resp = JSON.parse(this.response);
+				if (resp['ping'] == 'true') {
+					//alert("OK, valid stuff here.");
+					ping();
+				} else { 
+				        ping_fail();	
+				}
+		             } else if (this.readyState == XMLHttpRequest.DONE && this.status != 200) { 
+				  ping_fail();
+			     }
+			 }
+			 try { 
+			     x.send();
+			 } catch { 
+			     ping_fail();
+			 }
+			 setTimeout('check_ping()', 5000);
+		}
+
+	</SCRIPT>
+	</HEAD>
+<BODY onload="check_ping()">
+	<table width=100% height=200>
+		<tr>
+			<td width=100><img src=http://127.0.0.1:5000/bgimage height=175></td><td>PortAuthority: Mapping network interfaces to physical locations.<BR><BR>Service status: <span id=service_status>__</span></td>
+		</tr>
+		<tr>
+			<td colSpan=2><iframe width=100% height=500 frameborder=0 src=http://127.0.0.1:5000/index></iframe></td>
+		</tr>
+	</table>
+
+
+</BODY>
+
+
