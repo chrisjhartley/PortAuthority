@@ -1,5 +1,7 @@
 {
     "url_base": "https://cmdb-dev-legacy.it.ohio-state.edu/portmapper_data_api",
+    "url_buildings": "/api/buildings",
+    "url_mappings": "/api/mappings",
     "logo": "logo-color.png",
     "buildings": "[{\"name\": \"Apple Creek - Hollow Compost Shed (8123)\", \"id\": \"8123\"} ]",
     "debug": "true",
