@@ -41,6 +41,8 @@ import subprocess
 import os
 import platform
 
+from lldp_utils import decode_lldp_management_address
+
 import json
 
 try:
@@ -271,7 +273,14 @@ def capture():
         print("Not a phone!")
     InterfaceDescription = pkt['LLDPDUPortDescription'].description.decode()
     SystemName = pkt['LLDPDUSystemName'].system_name.decode()
-    SystemIPAddress = inet_ntoa(pkt['LLDPDUManagementAddress'].management_address)
+    management_address = getattr(pkt['LLDPDUManagementAddress'], 'management_address', None)
+    management_address_obj = pkt['LLDPDUManagementAddress']
+    address_subtype = getattr(management_address_obj, 'addrsubtype', None)
+    address_len = getattr(management_address_obj, 'addrlen', None)
+    SystemIPAddress = decode_lldp_management_address(management_address)
+    if SystemIPAddress is None:
+        SystemIPAddress = "(error)"
+    print(f"LLDP management address: subtype={address_subtype}, length={address_len}, value={SystemIPAddress}")
     SystemMacAddress = pkt["LLDPDUChassisID"].id
     PortID = pkt["LLDPDUPortID"].id.decode() if hasattr(pkt["LLDPDUPortID"].id, "decode") else pkt["LLDPDUPortID"].id
     PortIDSubtype = interfaceSubTypes[pkt["LLDPDUPortID"].subtype] if pkt["LLDPDUPortID"].subtype in interfaceSubTypes else f"INVALID({pkt['LLDPDUPortID'].subtype})"
