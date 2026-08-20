@@ -35,13 +35,11 @@ finally:
 
 
 
-from socket import inet_ntoa # This should already be installed?
+from socket import inet_ntoa, inet_ntop, AF_INET6 # This should already be installed?
 
 import subprocess
 import os
 import platform
-
-from lldp_utils import decode_lldp_management_address
 
 import json
 
@@ -63,10 +61,6 @@ finally:
     import requests
 
 app = Flask(__name__)
-# TODO: NO! These go in the config file.  Fix this.
-#api_base_url="https://cmdb.it.ohio-state.edu/"
-#api_building_path="/api/portmapper_locations"
-#api_mapping_path="/api/portmapper_data"
 
 PATH=os.path.dirname(os.path.realpath(__file__)) # os.path.expanduser("~")
 path_delim = "\\" if platform.system() == "Windows" else "/"
@@ -243,6 +237,65 @@ def eligible_packet(pkt):
 skippedPackets=0
 started_capture = -1  # Ew, mixed variable-naming convention: TODO: FIX.
 
+
+def mac_bytes_to_string(addr):
+    """Convert a 6-byte MAC address to colon-separated notation."""
+    return ":".join(f"{b:02x}" for b in addr)
+
+# LLDP management-address fix:
+# inet_ntoa() only handles 4-byte IPv4 addresses.  Some switches advertise
+# longer management address values, so check the packed byte length first and
+# use a packed-to-ASCII helper for anything longer than IPv4.
+try:
+    inet_ptoa
+except NameError:
+    def inet_ptoa(addr):
+        """Convert packed LLDP management-address bytes to a readable string.
+
+        4 bytes  -> IPv4 dotted decimal via inet_ntoa()
+        16 bytes -> IPv6 text via inet_ntop()
+        6 bytes  -> MAC address notation
+        other    -> hex fallback so the capture does not crash
+        """
+        if isinstance(addr, bytearray):
+            addr = bytes(addr)
+        elif isinstance(addr, str):
+            try:
+                addr = bytes.fromhex(addr)
+            except ValueError:
+                return addr
+
+        if len(addr) == 4:
+            return inet_ntoa(addr)
+        if len(addr) == 16:
+            return inet_ntop(AF_INET6, addr)
+        if len(addr) == 6:
+            return mac_bytes_to_string(addr)
+        return addr.hex()
+
+def parse_lldp_management_address(pkt):
+    """Return the LLDP management address without assuming it is IPv4."""
+    mgmt_addr = pkt['LLDPDUManagementAddress'].management_address
+
+    if isinstance(mgmt_addr, bytearray):
+        mgmt_addr = bytes(mgmt_addr)
+    elif isinstance(mgmt_addr, str):
+        try:
+            mgmt_addr = bytes.fromhex(mgmt_addr)
+        except ValueError:
+            return mgmt_addr
+
+    if len(mgmt_addr) == 4:
+        return inet_ntoa(mgmt_addr)
+
+    # Fix: anything longer than an IPv4 packed address should
+    # use inet_ptoa() instead of inet_ntoa().  The local fallback above also
+    # handles the 6-byte MAC case from the Mount Hall packet capture.
+    if len(mgmt_addr) > 4:
+        return inet_ptoa(mgmt_addr)
+
+    return mgmt_addr.hex()
+
 # Let's add some exception handling here, dude.
 @app.route("/capture")
 def capture():
@@ -273,14 +326,7 @@ def capture():
         print("Not a phone!")
     InterfaceDescription = pkt['LLDPDUPortDescription'].description.decode()
     SystemName = pkt['LLDPDUSystemName'].system_name.decode()
-    management_address = getattr(pkt['LLDPDUManagementAddress'], 'management_address', None)
-    management_address_obj = pkt['LLDPDUManagementAddress']
-    address_subtype = getattr(management_address_obj, 'addrsubtype', None)
-    address_len = getattr(management_address_obj, 'addrlen', None)
-    SystemIPAddress = decode_lldp_management_address(management_address)
-    if SystemIPAddress is None:
-        SystemIPAddress = "(error)"
-    print(f"LLDP management address: subtype={address_subtype}, length={address_len}, value={SystemIPAddress}")
+    SystemIPAddress = parse_lldp_management_address(pkt)
     SystemMacAddress = pkt["LLDPDUChassisID"].id
     PortID = pkt["LLDPDUPortID"].id.decode() if hasattr(pkt["LLDPDUPortID"].id, "decode") else pkt["LLDPDUPortID"].id
     PortIDSubtype = interfaceSubTypes[pkt["LLDPDUPortID"].subtype] if pkt["LLDPDUPortID"].subtype in interfaceSubTypes else f"INVALID({pkt['LLDPDUPortID'].subtype})"
